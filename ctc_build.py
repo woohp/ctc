@@ -1,15 +1,39 @@
+import sys
 from cffi import FFI
 ffi = FFI()
 
-ffi.set_source('_ctc', '''
-void ctc(const float* const y,
-         const unsigned* const l,
-         const size_t batches,
-         const size_t timesteps,
-         const size_t alphabet_size,
-         const size_t labels_length,
-         float* const costs,
-         float* const grad);
+with open('ctc.cpp') as f:
+    extra_compile_flags = ['-std=c++14']
+    if sys.platform in ('linux', 'linux2'):
+        extra_compile_flags.append('-fopenmp')
+    ffi.set_source('_ctc', f.read(), extra_compile_args=extra_compile_flags)
+
+ffi.cdef('''
+void ctc(
+    const float* const y,
+    const unsigned* const l,
+    const unsigned batches,
+    const unsigned timesteps,
+    const unsigned alphabet_size,
+    const unsigned labels_length,
+    float* const costs,
+    float* const grad);
+
+unsigned decode(
+    unsigned* y,
+    const unsigned timesteps,
+    const unsigned alphabet_size,
+    unsigned* out);
+
+void equals(
+    const unsigned* const y_pred,
+    const unsigned* const y_true,
+    const unsigned batches,
+    const unsigned timesteps,
+    const unsigned alphabet_size,
+    const unsigned labels_length,
+    unsigned char* const out);
+
 ''')
 
 
