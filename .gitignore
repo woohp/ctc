@@ -1,4 +1,7 @@
+*.swp
+*.swo
 *.pyc
-_ctc.*
+ctc/_libctc.*
 a.out*
 *egg*
+build

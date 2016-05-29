@@ -2,11 +2,12 @@ import sys
 from cffi import FFI
 ffi = FFI()
 
-with open('ctc.cpp') as f:
-    extra_compile_flags = ['-std=c++14']
+with open('src/ctc.cpp') as f:
+    extra_compile_flags = ['-std=c++1y']
     if sys.platform in ('linux', 'linux2'):
         extra_compile_flags.append('-fopenmp')
-    ffi.set_source('_ctc', f.read(), extra_compile_args=extra_compile_flags)
+
+    ffi.set_source('ctc._libctc', f.read(), extra_compile_args=extra_compile_flags)
 
 ffi.cdef('''
 void ctc(
