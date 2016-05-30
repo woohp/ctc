@@ -1,8 +1,6 @@
 #include <cmath>
 #include <cstring>
 #include <algorithm>
-#include <chrono>
-#include <iostream>
 using namespace std;
 
 
@@ -98,7 +96,6 @@ void ctc(const float* __restrict__ const y,
         }
 
         // forward step
-        auto start = std::chrono::high_resolution_clock::now();
         a[0] = log_y[blank];
         a[1] = log_y[l[0]];
         for (unsigned s = 2; s < labels_length_p; s++)
@@ -131,9 +128,6 @@ void ctc(const float* __restrict__ const y,
                 a_t[s] = log_y_t[blank] + logadd(a_tm1[s], a_tm1[s-1]);
             }
         }
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> diff = end-start;
-        // std::cout << "elapsed: " << diff.count() << " s\n";
 
         // backward step
         auto* const b_tl = b + (timesteps - 1) * labels_length_p;
@@ -169,9 +163,6 @@ void ctc(const float* __restrict__ const y,
                 b_t[s] = log_y_t[blank] + logadd(b_tp1[s], b_tp1[s+1]);
             }
         }
-        auto end2 = std::chrono::high_resolution_clock::now();
-        diff = end2-end;
-        // std::cout << "elapsed: " << diff.count() << " s\n";
 
         const auto log_prob = logadd(a[timesteps*labels_length_p-1], a[timesteps*labels_length_p-2]);
         costs[batch] = -log_prob;
@@ -183,10 +174,6 @@ void ctc(const float* __restrict__ const y,
             auto k = l[_s];
             alphabet_indices[k * labels_length + alphabet_counts[k]++] = _s * 2 + 1;
         }
-
-        auto end3 = std::chrono::high_resolution_clock::now();
-        diff = end3-end2;
-        // std::cout << "elapsed: " << diff.count() << " s\n";
 
         // calculate gradient
         for (unsigned t = 0; t < timesteps; t++)
@@ -233,10 +220,6 @@ void ctc(const float* __restrict__ const y,
             auto grad_cost = logadd(numbers_to_add, i) - 2 * log_y_t[blank] - log_prob_t;
             grad_t[blank] = -exp(grad_cost);
         }
-
-        auto end4 = std::chrono::high_resolution_clock::now();
-        diff = end4-end3;
-        // std::cout << "elapsed: " << diff.count() << " s\n";
     }
 
     delete[] workspace;

@@ -1,4 +1,4 @@
-from _ctc import ffi, lib
+from _libctc import ffi, lib
 import numpy as np
 
 

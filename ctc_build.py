@@ -3,11 +3,13 @@ from cffi import FFI
 ffi = FFI()
 
 with open('src/ctc.cpp') as f:
-    extra_compile_flags = ['-std=c++1y']
+    extra_compile_args = ['-std=c++1y']
+    extra_link_args = []
     if sys.platform in ('linux', 'linux2'):
-        extra_compile_flags.append('-fopenmp')
+        extra_compile_args.append('-fopenmp')
+        extra_link_args = ['-lstdc++', '-lgomp']
 
-    ffi.set_source('ctc._libctc', f.read(), extra_compile_args=extra_compile_flags)
+    ffi.set_source('ctc._libctc', f.read(), extra_compile_args=extra_compile_args, extra_link_args=extra_link_args)
 
 ffi.cdef('''
 void ctc(
