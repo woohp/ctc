@@ -136,7 +136,7 @@ void ctc(const float* __restrict__ const y,
         for (unsigned s = 0; s < labels_length_p - 2; s++)
             b_tl[s] = LOG_ALMOST_ZERO;
 
-        for (unsigned t = timesteps - 2; t < timesteps; t--) // t < timesteps because it will wraparound
+        for (unsigned t = timesteps - 2; t < timesteps; t--) // t < timesteps because it will wrap-around
         {
             auto* b_t = b + t * labels_length_p;
             auto* b_tp1 = b_t + labels_length_p;
@@ -151,7 +151,7 @@ void ctc(const float* __restrict__ const y,
             s = labels_length_p - 3;
             b_t[s] = log_y_t[blank] + logadd(b_tp1[s], b_tp1[s+1]);
 
-            for (unsigned _s = labels_length - 2; _s < timesteps; _s--) // t < timesteps because it will wraparound
+            for (unsigned _s = labels_length - 2; _s < labels_length; _s--) // _s < labels_length because it will wrap-around
             {
                 s = 2 * _s + 1;
                 if (l[_s+1] == l[_s])
