@@ -51,7 +51,7 @@ float logadd(float* x, unsigned n)
 extern "C" {
 
 void ctc(const float* __restrict__ const y,
-         const unsigned* __restrict__ const l,
+         const unsigned* __restrict__ const labels,
          const unsigned batches,
          const unsigned timesteps,
          const unsigned alphabet_size,
@@ -77,6 +77,7 @@ void ctc(const float* __restrict__ const y,
     for (unsigned batch = 0; batch < batches; batch++)
     {
         const auto* __restrict__ const batch_y = y + batch * y_size;
+        const auto* __restrict__ const batch_labels = labels + batch * labels_length;
         auto* __restrict__ const batch_grad = grad + batch * y_size;
 
         auto* __restrict__ const batch_workspace = workspace + batch * workspace_size;
@@ -97,7 +98,7 @@ void ctc(const float* __restrict__ const y,
 
         // forward step
         a[0] = log_y[blank];
-        a[1] = log_y[l[0]];
+        a[1] = log_y[batch_labels[0]];
         for (unsigned s = 2; s < labels_length_p; s++)
             a[s] = LOG_ALMOST_ZERO;
 
@@ -111,7 +112,7 @@ void ctc(const float* __restrict__ const y,
             a_t[s] = log_y_t[blank] + a_tm1[s];
 
             s = 1;
-            a_t[s] = log_y_t[l[0]] + logadd(a_tm1[s], a_tm1[s-1]);
+            a_t[s] = log_y_t[batch_labels[0]] + logadd(a_tm1[s], a_tm1[s-1]);
 
             s = 2;
             a_t[s] = log_y_t[blank] + logadd(a_tm1[s], a_tm1[s-1]);
@@ -119,10 +120,10 @@ void ctc(const float* __restrict__ const y,
             for (unsigned _s = 1; _s < labels_length; _s++)
             {
                 s = 2 * _s + 1;
-                if (l[_s-1] == l[_s])
-                    a_t[s] = log_y_t[l[_s]] + logadd(a_tm1[s], a_tm1[s-1]);
+                if (batch_labels[_s-1] == batch_labels[_s])
+                    a_t[s] = log_y_t[batch_labels[_s]] + logadd(a_tm1[s], a_tm1[s-1]);
                 else
-                    a_t[s] = log_y_t[l[_s]] + logadd(a_tm1[s], a_tm1[s-1], a_tm1[s-2]);
+                    a_t[s] = log_y_t[batch_labels[_s]] + logadd(a_tm1[s], a_tm1[s-1], a_tm1[s-2]);
 
                 s++;
                 a_t[s] = log_y_t[blank] + logadd(a_tm1[s], a_tm1[s-1]);
@@ -132,7 +133,7 @@ void ctc(const float* __restrict__ const y,
         // backward step
         auto* const b_tl = b + (timesteps - 1) * labels_length_p;
         b_tl[labels_length_p-1] = log_y[(timesteps-1)*alphabet_size + blank];
-        b_tl[labels_length_p-2] = log_y[(timesteps-1)*alphabet_size + l[labels_length-1]];
+        b_tl[labels_length_p-2] = log_y[(timesteps-1)*alphabet_size + batch_labels[labels_length-1]];
         for (unsigned s = 0; s < labels_length_p - 2; s++)
             b_tl[s] = LOG_ALMOST_ZERO;
 
@@ -146,7 +147,7 @@ void ctc(const float* __restrict__ const y,
             b_t[s] = log_y_t[blank] + b_tp1[s];
 
             s = labels_length_p - 2;
-            b_t[s] = log_y_t[l[labels_length-1]] + logadd(b_tp1[s], b_tp1[s+1]);
+            b_t[s] = log_y_t[batch_labels[labels_length-1]] + logadd(b_tp1[s], b_tp1[s+1]);
 
             s = labels_length_p - 3;
             b_t[s] = log_y_t[blank] + logadd(b_tp1[s], b_tp1[s+1]);
@@ -154,10 +155,10 @@ void ctc(const float* __restrict__ const y,
             for (unsigned _s = labels_length - 2; _s < labels_length; _s--) // _s < labels_length because it will wrap-around
             {
                 s = 2 * _s + 1;
-                if (l[_s+1] == l[_s])
-                    b_t[s] = log_y_t[l[_s]] + logadd(b_tp1[s], b_tp1[s+1]);
+                if (batch_labels[_s+1] == batch_labels[_s])
+                    b_t[s] = log_y_t[batch_labels[_s]] + logadd(b_tp1[s], b_tp1[s+1]);
                 else
-                    b_t[s] = log_y_t[l[_s]] + logadd(b_tp1[s], b_tp1[s+1], b_tp1[s+2]);
+                    b_t[s] = log_y_t[batch_labels[_s]] + logadd(b_tp1[s], b_tp1[s+1], b_tp1[s+2]);
 
                 s--;
                 b_t[s] = log_y_t[blank] + logadd(b_tp1[s], b_tp1[s+1]);
@@ -171,7 +172,7 @@ void ctc(const float* __restrict__ const y,
         memset(alphabet_counts, 0, sizeof(alphabet_counts[0]) * alphabet_counts_size);
         for (unsigned _s = 0; _s < labels_length; _s++)
         {
-            auto k = l[_s];
+            auto k = batch_labels[_s];
             alphabet_indices[k * labels_length + alphabet_counts[k]++] = _s * 2 + 1;
         }
 
@@ -187,7 +188,7 @@ void ctc(const float* __restrict__ const y,
             for (unsigned _s = 0; _s < labels_length; _s++)
             {
                 unsigned s = _s * 2 + 1;
-                numbers_to_add[s] = (a_t[s] += b_t[s]) - log_y_t[l[_s]];
+                numbers_to_add[s] = (a_t[s] += b_t[s]) - log_y_t[batch_labels[_s]];
                 s++;
                 numbers_to_add[s] = (a_t[s] += b_t[s]) - log_y_t[blank];
             }
@@ -225,59 +226,92 @@ void ctc(const float* __restrict__ const y,
     delete[] workspace;
 }
 
-unsigned decode(const unsigned* __restrict__ const y,
+unsigned decode(const float* __restrict__ const y,
                 const unsigned timesteps,
                 const unsigned alphabet_size,
                 unsigned* __restrict__ const out)
 {
-    auto prev = alphabet_size;
+    const auto blank = alphabet_size - 1;
+    auto prev = blank;
     unsigned decoded_length = 0;
 
-    for (unsigned i = 0; i < timesteps; i++)
+    for (unsigned t = 0; t < timesteps; t++)
     {
-        if (y[i] != alphabet_size and y[i] != prev)
+        auto y_t = y + t * alphabet_size;
+
+        auto max = y_t + blank;
+        for (auto it = max - 1; it >= y_t; it--)
         {
-            out[decoded_length++] = y[i];
-            prev = y[i];
+            if (*it > *max)
+            {
+                max = it;
+                if (*it > 0.5f) // short circuit if possible
+                    break;
+            }
         }
-        else if (y[i] == alphabet_size)
-            prev = alphabet_size;
+        auto k = max - y_t;
+
+        if (k != blank and k != prev)
+        {
+            out[decoded_length++] = k;
+            prev = k;
+        }
+        else if (k == blank)
+            prev = blank;
     }
 
     return decoded_length;
 }
 
-void equals(const unsigned* __restrict__ const y_pred,
-            const unsigned* __restrict__ const y_true,
+void equals(const float* __restrict__ const y_pred,
+            const unsigned* __restrict__ const labels,
             const unsigned batches,
             const unsigned timesteps,
             const unsigned alphabet_size,
             const unsigned labels_length,
             unsigned char* __restrict__ const out)
 {
+    const auto blank = alphabet_size - 1;
+    const auto y_size = timesteps * alphabet_size;
+
     #pragma omp parallel for
     for (unsigned batch = 0; batch < batches; batch++)
     {
-        auto batch_y_pred = y_pred + batch * timesteps;
-        auto batch_y_true = y_true + batch * labels_length;
+        auto const batch_y_pred = y_pred + batch * y_size;
+        auto const batch_labels = labels + batch * labels_length;
 
         bool equal = true;
-
-        auto prev = alphabet_size;
+        auto prev = blank;
         unsigned decoded_length = 0;
-        for (unsigned i = 0; i < timesteps; i++)
+
+        for (unsigned t = 0; t < timesteps; t++)
         {
-            if (batch_y_pred[i] != alphabet_size and batch_y_pred[i] != prev)
+            auto y_t = batch_y_pred + t * alphabet_size;
+
+            // argmax along the alphabets axis
+            auto max = y_t + blank;
+            for (auto it = max - 1; it >= y_t; it--)
             {
-                if (batch_y_pred[i] != batch_y_true[decoded_length++])
+                if (*it > *max)
+                {
+                    max = it;
+                    if (*it > 0.5f) // short circuit if possible
+                        break;
+                }
+            }
+            auto k = max - y_t;
+
+            if (k != blank and k != prev)
+            {
+                if (k != batch_labels[decoded_length++])
                 {
                     equal = false;
                     break;
                 }
-                prev = batch_y_pred[i];
+                prev = k;
             }
-            else if (batch_y_pred[i] == alphabet_size)
-                prev = alphabet_size;
+            else if (k == blank)
+                prev = blank;
         }
 
         out[batch] = equal;

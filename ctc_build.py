@@ -23,13 +23,13 @@ void ctc(
     float* const grad);
 
 unsigned decode(
-    unsigned* y,
+    const float* const y,
     const unsigned timesteps,
     const unsigned alphabet_size,
-    unsigned* out);
+    unsigned* const out);
 
 void equals(
-    const unsigned* const y_pred,
+    const float* const y_pred,
     const unsigned* const y_true,
     const unsigned batches,
     const unsigned timesteps,

@@ -28,14 +28,14 @@ def ctc(y, labels):
     return costs, gradients
 
 
-def decode(y, alphabet_size):
-    assert len(y.shape) == 1
-    assert y.dtype == np.uint32
+def decode(y):
+    assert len(y.shape) == 2
+    assert y.dtype == np.float32
 
-    timesteps = len(y)
-    decoded = np.empty_like(y)
+    timesteps, alphabet_size = y.shape
+    decoded = np.empty(len(y), dtype=np.uint32)
     decoded_length = lib.decode(
-        ffi.cast('unsigned*', y.ctypes.data),
+        ffi.cast('float*', y.ctypes.data),
         ffi.cast('unsigned', timesteps),
         ffi.cast('unsigned', alphabet_size),
         ffi.cast('unsigned*', decoded.ctypes.data)
@@ -44,19 +44,19 @@ def decode(y, alphabet_size):
     return decoded[:decoded_length]
 
 
-def equals(y, labels, alphabet_size):
-    assert len(y.shape) == 2
+def equals(y, labels):
+    assert len(y.shape) == 3
     assert len(labels.shape) == 2
     assert len(y) == len(labels)
-    assert y.dtype == np.uint32
+    assert y.dtype == np.float32
     assert labels.dtype == np.uint32
 
-    batches, timesteps = y.shape
+    batches, timesteps, alphabet_size = y.shape
     labels_length = labels.shape[1]
     out = np.empty(len(y), dtype=np.bool)
 
     lib.equals(
-        ffi.cast('unsigned*', y.ctypes.data),
+        ffi.cast('float*', y.ctypes.data),
         ffi.cast('unsigned*', labels.ctypes.data),
         ffi.cast('unsigned', batches),
         ffi.cast('unsigned', timesteps),
