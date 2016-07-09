@@ -28,6 +28,30 @@ def ctc(y, labels):
     return costs, gradients
 
 
+def ctc_loss_only(y, labels):
+    assert len(y.shape) == 3
+    assert len(labels.shape) == 2
+    assert len(y) == len(labels)
+    assert y.dtype == np.float32
+    assert labels.dtype == np.uint32
+
+    batches, timesteps, alphabet_size = y.shape
+    labels_length = labels.shape[1]
+    costs = np.empty(batches, dtype=np.float32)
+
+    lib.ctc_loss_only(
+        ffi.cast('float*', y.ctypes.data),
+        ffi.cast('unsigned*', labels.ctypes.data),
+        ffi.cast('unsigned', batches),
+        ffi.cast('unsigned', timesteps),
+        ffi.cast('unsigned', alphabet_size),
+        ffi.cast('unsigned', labels_length),
+        ffi.cast('float*', costs.ctypes.data),
+    )
+
+    return costs
+
+
 def decode(y):
     assert len(y.shape) == 2
     assert y.dtype == np.float32

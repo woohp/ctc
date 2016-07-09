@@ -4,8 +4,16 @@
 using namespace std;
 
 
-#define ALMOST_ZERO 2e-9f
-#define LOG_ALMOST_ZERO -20.0f
+constexpr float ALMOST_ZERO = 2e-9f;
+constexpr float LOG_ALMOST_ZERO = -20.0f;
+
+inline float safe_log(float y)
+{
+
+    if (y < ALMOST_ZERO)
+        return LOG_ALMOST_ZERO;
+    return log(y);
+};
 
 
 float logadd(float x, float y)
@@ -70,7 +78,7 @@ void ctc(const float* __restrict__ const y,
     const auto blank = alphabet_size - 1;
 
     static_assert(sizeof(float) == sizeof(unsigned), "wrong size");
-    
+
     auto* __restrict__ const workspace = new float[workspace_size * batches];
 
     #pragma omp parallel for
@@ -89,12 +97,7 @@ void ctc(const float* __restrict__ const y,
         auto* __restrict__ const alphabet_counts = alphabet_indices + alphabet_indices_size;
 
         for (unsigned i = 0; i < y_size; i++)
-        {
-            if (batch_y[i] < ALMOST_ZERO)
-                log_y[i] = LOG_ALMOST_ZERO;
-            else
-                log_y[i] = log(batch_y[i]);
-        }
+            log_y[i] = safe_log(batch_y[i]);
 
         // forward step
         a[0] = log_y[blank];
@@ -225,6 +228,84 @@ void ctc(const float* __restrict__ const y,
 
     delete[] workspace;
 }
+
+
+void ctc_loss_only(
+    const float* __restrict__ const y,
+    const unsigned* __restrict__ const labels,
+    const unsigned batches,
+    const unsigned timesteps,
+    const unsigned alphabet_size,
+    const unsigned labels_length,
+    float* __restrict__ const costs)
+{
+    const auto labels_length_p = labels_length * 2 + 1;
+    const auto y_size = timesteps * alphabet_size;
+    const auto log_y_size = alphabet_size;
+    const auto a_size = 2 * labels_length_p;
+    const auto workspace_size = log_y_size + a_size;
+
+    const auto blank = alphabet_size - 1;
+
+    static_assert(sizeof(float) == sizeof(unsigned), "wrong size");
+
+    auto* __restrict__ const workspace = new float[workspace_size * batches];
+
+    #pragma omp parallel for
+    for (unsigned batch = 0; batch < batches; batch++)
+    {
+        const auto* __restrict__ const batch_y = y + batch * y_size;
+        const auto* __restrict__ const batch_labels = labels + batch * labels_length;
+
+        auto* __restrict__ const batch_workspace = workspace + batch * workspace_size;
+        auto* __restrict__ const log_y = batch_workspace;
+        auto* __restrict__ const a = log_y + log_y_size;
+
+        // forward step
+        a[0] = safe_log(batch_y[blank]);
+        a[1] = safe_log(batch_y[batch_labels[0]]);
+        for (unsigned s = 2; s < labels_length_p; s++)
+            a[s] = LOG_ALMOST_ZERO;
+
+        for (unsigned t = 1; t < timesteps; t++)
+        {
+            auto* const a_t = a + (t % 2) * labels_length_p;
+            const auto* const a_tm1 = a + ((t - 1) % 2) * labels_length_p;
+            const auto* const y_t = batch_y + t * alphabet_size;
+
+            for (unsigned k = 0; k < alphabet_size; k++)
+                log_y[k] = safe_log(y_t[k]);
+
+            unsigned s = 0;
+            a_t[s] = log_y[blank] + a_tm1[s];
+
+            s = 1;
+            a_t[s] = log_y[batch_labels[0]] + logadd(a_tm1[s], a_tm1[s-1]);
+
+            s = 2;
+            a_t[s] = log_y[blank] + logadd(a_tm1[s], a_tm1[s-1]);
+
+            for (unsigned _s = 1; _s < labels_length; _s++)
+            {
+                s = 2 * _s + 1;
+                if (batch_labels[_s-1] == batch_labels[_s])
+                    a_t[s] = log_y[batch_labels[_s]] + logadd(a_tm1[s], a_tm1[s-1]);
+                else
+                    a_t[s] = log_y[batch_labels[_s]] + logadd(a_tm1[s], a_tm1[s-1], a_tm1[s-2]);
+
+                s++;
+                a_t[s] = log_y[blank] + logadd(a_tm1[s], a_tm1[s-1]);
+            }
+        }
+
+        const auto a_t_last = a + ((timesteps - 1) % 2) * labels_length_p;
+        const auto log_prob = logadd(a_t_last[labels_length_p-1], a_t_last[labels_length_p-2]);
+        costs[batch] = -log_prob;
+    }
+
+    delete[] workspace;
+}
+
 
 unsigned decode(const float* __restrict__ const y,
                 const unsigned timesteps,

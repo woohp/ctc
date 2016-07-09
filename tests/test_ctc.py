@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-from ctc import ctc, decode, equals
+from ctc import ctc, ctc_loss_only, decode, equals
 
 
 np.set_printoptions(precision=5, suppress=True, linewidth=1000)
@@ -49,6 +49,14 @@ class TestCTC(unittest.TestCase):
         self.assertAlmostEqual(cost, self.expected_cost, 5)
         self.assertTrue(np.abs(grad - self.expected_gradient).sum() < 1e-5)
 
+    def test_ctc_loss_only(self):
+        y = self.y
+        l = self.l
+
+        cost = ctc_loss_only(y, l)
+
+        self.assertAlmostEqual(cost, self.expected_cost, 5)
+
     def test_ctc_batch(self):
         y = np.array([
             [[0.1, 0.1, 0.1, 0.9],
@@ -61,6 +69,20 @@ class TestCTC(unittest.TestCase):
         l = np.array([[1], [2]], dtype=np.uint32)
 
         cost, grad = ctc(y, l)
+        self.assertEqual(cost[0], cost[1])
+
+    def test_ctc_loss_only_batch(self):
+        y = np.array([
+            [[0.1, 0.1, 0.1, 0.9],
+             [0.1, 0.9, 0.1, 0.1],
+             [0.1, 0.1, 0.1, 0.9]],
+            [[0.1, 0.1, 0.1, 0.9],
+             [0.1, 0.1, 0.9, 0.1],
+             [0.1, 0.1, 0.1, 0.9]],
+        ], dtype=np.float32)
+        l = np.array([[1], [2]], dtype=np.uint32)
+
+        cost = ctc_loss_only(y, l)
         self.assertEqual(cost[0], cost[1])
 
     # def test_logadd_n_stable(self):

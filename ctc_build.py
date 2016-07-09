@@ -22,6 +22,15 @@ void ctc(
     float* const costs,
     float* const grad);
 
+void ctc_loss_only(
+    const float* const y,
+    const unsigned* const labels,
+    const unsigned batches,
+    const unsigned timesteps,
+    const unsigned alphabet_size,
+    const unsigned labels_length,
+    float* const costs);
+
 unsigned decode(
     const float* const y,
     const unsigned timesteps,
