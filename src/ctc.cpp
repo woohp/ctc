@@ -395,6 +395,8 @@ void equals(const float* __restrict__ const y_pred,
                 prev = blank;
         }
 
+        equal = equal && (decoded_length == labels_length);
+
         out[batch] = equal;
     }
 }
