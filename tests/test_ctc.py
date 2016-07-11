@@ -85,11 +85,6 @@ class TestCTC(unittest.TestCase):
         cost = ctc_loss_only(y, l)
         self.assertEqual(cost[0], cost[1])
 
-    # def test_logadd_n_stable(self):
-    #     x = np.array([-89.112, -48.1587, -0.00852977, -44.6487, -69.8181, -101.109], dtype=np.float32)
-    #     r = logadd_n(x)
-    #     self.assertAlmostEqual(r, -0.00852977018803358, places=6)
-
     def test_ctc_long_sequence(self):
         l = np.array([0, 1] * 120, dtype=np.uint32)[None, :]
         y = np.array([
@@ -209,3 +204,17 @@ class TestCTC(unittest.TestCase):
         ], dtype=np.uint32)
 
         self.assertEqual(equals(y, y_true).tolist(), [True, False])
+
+    def test_equals_blank(self):
+        y = np.array([[
+            [0, 0, 0.1, 0.9],
+            [0, 0, 0.1, 0.9],
+            [0, 0, 0.1, 0.9],
+            [0, 0, 0.1, 0.9],
+            [0, 0, 0.1, 0.9],
+            [0, 0, 0.1, 0.9]]
+        ], dtype=np.float32)
+
+        y_true = np.array([[0, 1, 2]], dtype=np.uint32)
+
+        self.assertEqual(equals(y, y_true).tolist(), [False])
