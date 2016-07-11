@@ -21,18 +21,7 @@ class CTCEqualsOp(theano.Op):
         outputs[0][0] = ctc.equals(y_pred, y_true).astype(np.int8)
 
 
-ctc_equals = CTCEqualsOp()
-
-
 class CTCLossMixin(object):
-    def grad(self, inputs, output_grads):
-        y, l = inputs
-        grad = self(y, l)[1]
-        return [grad * output_grads[0][:, None, None],
-                theano.gradient.grad_not_implemented(l, 1, '')]
-
-
-class CTCLossOpCpu(theano.Op, CTCLossMixin):
     def make_node(self, y, l):
         y = T.as_tensor_variable(y)
         l = T.as_tensor_variable(l)
@@ -40,6 +29,14 @@ class CTCLossOpCpu(theano.Op, CTCLossMixin):
         assert l.ndim == 2
         return theano.Apply(self, [y, l], [T.fvector(), T.ftensor3()])
 
+    def grad(self, inputs, output_grads):
+        y, l = inputs
+        grad = self(y, l)[1]
+        return [grad * output_grads[0][:, None, None],
+                theano.gradient.grad_not_implemented(l, 1, '')]
+
+
+class CTCLossOpCpu(CTCLossMixin, theano.Op):
     def perform(self, node, inputs, outputs):
         y, l = inputs
         l = l.astype(np.uint32)
@@ -67,13 +64,10 @@ class CTCLossOnlyOpCPU(theano.Op):
                 theano.gradient.grad_not_implemented(l, 1, '')]
 
 
+ctc_equals = CTCEqualsOp()
 ctc_loss_op = CTCLossOpCpu()
-ctc_loss_only_op = CTCLossOnlyOpCPU()
+ctc_loss_only = CTCLossOnlyOpCPU()
 
 
 def ctc_loss(y, l):
     return ctc_loss_op(y, l)[0]
-
-
-def ctc_loss_only(y, l):
-    return ctc_loss_only_op(y, l)[0]

@@ -9,7 +9,6 @@ constexpr float LOG_ALMOST_ZERO = -20.0f;
 
 inline float safe_log(float y)
 {
-
     if (y < ALMOST_ZERO)
         return LOG_ALMOST_ZERO;
     return log(y);
