@@ -11,7 +11,7 @@ def ctc(y, labels):
 
     batches, timesteps, alphabet_size = y.shape
     labels_length = labels.shape[1]
-    costs = np.empty(batches, dtype=np.float32)
+    losses = np.empty(batches, dtype=np.float32)
     gradients = np.empty_like(y)
 
     lib.ctc(
@@ -21,11 +21,11 @@ def ctc(y, labels):
         ffi.cast('unsigned', timesteps),
         ffi.cast('unsigned', alphabet_size),
         ffi.cast('unsigned', labels_length),
-        ffi.cast('float*', costs.ctypes.data),
+        ffi.cast('float*', losses.ctypes.data),
         ffi.cast('float*', gradients.ctypes.data)
     )
 
-    return costs, gradients
+    return losses, gradients
 
 
 def ctc_loss_only(y, labels):
@@ -37,7 +37,7 @@ def ctc_loss_only(y, labels):
 
     batches, timesteps, alphabet_size = y.shape
     labels_length = labels.shape[1]
-    costs = np.empty(batches, dtype=np.float32)
+    losses = np.empty(batches, dtype=np.float32)
 
     lib.ctc_loss_only(
         ffi.cast('float*', y.ctypes.data),
@@ -46,10 +46,10 @@ def ctc_loss_only(y, labels):
         ffi.cast('unsigned', timesteps),
         ffi.cast('unsigned', alphabet_size),
         ffi.cast('unsigned', labels_length),
-        ffi.cast('float*', costs.ctypes.data),
+        ffi.cast('float*', losses.ctypes.data),
     )
 
-    return costs
+    return losses
 
 
 def decode(y):
@@ -112,6 +112,6 @@ if __name__ == '__main__':
     import time
 
     start = time.time()
-    costs, gradients = ctc(y, l)
+    losses, gradients = ctc(y, l)
     print time.time() - start
-    print costs
+    print losses

@@ -25,7 +25,7 @@ class TestCTC(unittest.TestCase):
             [0.01, 0.01, 0.01, 0.97],
         ]], dtype=np.float32)
 
-        self.expected_cost = 3.72168573746
+        self.expected_loss = 3.72168573746
         self.expected_gradient = np.array([
             [[-3.34564171e+01, -0.00000000e+00, -0.00000000e+00, -6.86016142e-01],
              [-3.37871819e+01, -7.03715952e-03, -0.00000000e+00, -6.82533741e-01],
@@ -44,18 +44,18 @@ class TestCTC(unittest.TestCase):
         y = self.y
         l = self.l
 
-        cost, grad = ctc(y, l)
+        loss, grad = ctc(y, l)
 
-        self.assertAlmostEqual(cost, self.expected_cost, 5)
+        self.assertAlmostEqual(loss, self.expected_loss, 5)
         self.assertTrue(np.abs(grad - self.expected_gradient).sum() < 1e-5)
 
     def test_ctc_loss_only(self):
         y = self.y
         l = self.l
 
-        cost = ctc_loss_only(y, l)
+        loss = ctc_loss_only(y, l)
 
-        self.assertAlmostEqual(cost, self.expected_cost, 5)
+        self.assertAlmostEqual(loss, self.expected_loss, 5)
 
     def test_ctc_batch(self):
         y = np.array([
@@ -68,8 +68,8 @@ class TestCTC(unittest.TestCase):
         ], dtype=np.float32)
         l = np.array([[1], [2]], dtype=np.uint32)
 
-        cost, grad = ctc(y, l)
-        self.assertEqual(cost[0], cost[1])
+        loss, grad = ctc(y, l)
+        self.assertEqual(loss[0], loss[1])
 
     def test_ctc_loss_only_batch(self):
         y = np.array([
@@ -82,8 +82,8 @@ class TestCTC(unittest.TestCase):
         ], dtype=np.float32)
         l = np.array([[1], [2]], dtype=np.uint32)
 
-        cost = ctc_loss_only(y, l)
-        self.assertEqual(cost[0], cost[1])
+        loss = ctc_loss_only(y, l)
+        self.assertEqual(loss[0], loss[1])
 
     def test_ctc_long_sequence(self):
         l = np.array([0, 1] * 120, dtype=np.uint32)[None, :]
@@ -95,7 +95,7 @@ class TestCTC(unittest.TestCase):
             [0.01, 0.01, 0.01, 0.97]
         ] * 100, dtype=np.float32)[None, :, :]
 
-        cost, grad = ctc(y, l)
+        loss, grad = ctc(y, l)
 
         self.assertTrue(np.isfinite(grad.sum()))
 
@@ -107,9 +107,9 @@ class TestCTC(unittest.TestCase):
             [0, 0, 0, 30],
         ], dtype=np.float32)[None, :, :]
 
-        cost, grad = ctc(y, l)
+        loss, grad = ctc(y, l)
 
-        self.assertTrue(np.isfinite(cost))
+        self.assertTrue(np.isfinite(loss))
         self.assertTrue(np.isfinite(np.abs(grad).sum()))
 
     def test_bad_inputs_2(self):
@@ -121,9 +121,9 @@ class TestCTC(unittest.TestCase):
             [0, 0, 0, 30],
         ], dtype=np.float32)[None, :, :]
 
-        cost, grad = ctc(y, l)
+        loss, grad = ctc(y, l)
 
-        self.assertTrue(np.isfinite(cost))
+        self.assertTrue(np.isfinite(loss))
         self.assertTrue(np.isfinite(np.abs(grad).sum()))
 
     def test_bad_inputs_3(self):
@@ -134,8 +134,8 @@ class TestCTC(unittest.TestCase):
             [0, 0, 0, 30],
         ] * 100, dtype=np.float32)[None, :, :]
 
-        cost, grad = ctc(y, l)
-        self.assertTrue(np.isfinite(cost))
+        loss, grad = ctc(y, l)
+        self.assertTrue(np.isfinite(loss))
         self.assertTrue(np.isfinite(np.abs(grad).sum()))
 
     def test_bad_inputs_4(self):
@@ -156,8 +156,8 @@ class TestCTC(unittest.TestCase):
         ], dtype=np.float32)[None, :, :]
         l = np.array([[2, 0, 2, 2, 2, 2]], dtype=np.uint32)
 
-        cost, grad = ctc(y, l)
-        self.assertTrue(np.isfinite(cost))
+        loss, grad = ctc(y, l)
+        self.assertTrue(np.isfinite(loss))
         self.assertTrue(np.isfinite(np.abs(grad).sum()))
 
     def test_decode(self):

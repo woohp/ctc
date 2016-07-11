@@ -64,7 +64,7 @@ void ctc(const float* __restrict__ const y,
          const unsigned timesteps,
          const unsigned alphabet_size,
          const unsigned labels_length,
-         float* __restrict__ const costs,
+         float* __restrict__ const losses,
          float* __restrict__ const grad)
 {
     const auto labels_length_p = labels_length * 2 + 1;
@@ -169,7 +169,7 @@ void ctc(const float* __restrict__ const y,
         }
 
         const auto log_prob = logadd(a[timesteps*labels_length_p-1], a[timesteps*labels_length_p-2]);
-        costs[batch] = -log_prob;
+        losses[batch] = -log_prob;
 
         // for each "letter", figure out all the indices in the label where that letter is present
         memset(alphabet_counts, 0, sizeof(alphabet_counts[0]) * alphabet_counts_size);
@@ -212,8 +212,8 @@ void ctc(const float* __restrict__ const y,
                 }
                 else
                 {
-                    const auto grad_cost = logadd(numbers_to_add, i) - 2 * log_y_t[k] - log_prob_t;
-                    grad_t[k] = -exp(grad_cost);
+                    const auto grad_loss = logadd(numbers_to_add, i) - 2 * log_y_t[k] - log_prob_t;
+                    grad_t[k] = -exp(grad_loss);
                 }
             }
 
@@ -221,8 +221,8 @@ void ctc(const float* __restrict__ const y,
             unsigned i = 0;
             for (unsigned s = 0; s < labels_length_p; s += 2)
                 numbers_to_add[i++] = a_t[s];
-            auto grad_cost = logadd(numbers_to_add, i) - 2 * log_y_t[blank] - log_prob_t;
-            grad_t[blank] = -exp(grad_cost);
+            auto grad_loss = logadd(numbers_to_add, i) - 2 * log_y_t[blank] - log_prob_t;
+            grad_t[blank] = -exp(grad_loss);
         }
     }
 
@@ -237,7 +237,7 @@ void ctc_loss_only(
     const unsigned timesteps,
     const unsigned alphabet_size,
     const unsigned labels_length,
-    float* __restrict__ const costs)
+    float* __restrict__ const losses)
 {
     const auto labels_length_p = labels_length * 2 + 1;
     const auto y_size = timesteps * alphabet_size;
@@ -300,7 +300,7 @@ void ctc_loss_only(
 
         const auto a_t_last = a + ((timesteps - 1) % 2) * labels_length_p;
         const auto log_prob = logadd(a_t_last[labels_length_p-1], a_t_last[labels_length_p-2]);
-        costs[batch] = -log_prob;
+        losses[batch] = -log_prob;
     }
 
     delete[] workspace;

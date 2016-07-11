@@ -3,7 +3,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-from ctc import equals, ctc, ctc_loss_only
+import ctc
 
 
 class CTCEqualsOp(theano.Op):
@@ -18,13 +18,13 @@ class CTCEqualsOp(theano.Op):
         y_pred, y_true = inputs
         y_true = y_true.astype(np.uint32)
 
-        outputs[0][0] = equals(y_pred, y_true).astype(np.int8)
+        outputs[0][0] = ctc.equals(y_pred, y_true).astype(np.int8)
 
 
 ctc_equals = CTCEqualsOp()
 
 
-class CTCCostMixin(object):
+class CTCLossMixin(object):
     def grad(self, inputs, output_grads):
         y, l = inputs
         grad = self(y, l)[1]
@@ -32,7 +32,7 @@ class CTCCostMixin(object):
                 theano.gradient.grad_not_implemented(l, 1, '')]
 
 
-class CTCCostOpCpu(theano.Op, CTCCostMixin):
+class CTCLossOpCpu(theano.Op, CTCLossMixin):
     def make_node(self, y, l):
         y = T.as_tensor_variable(y)
         l = T.as_tensor_variable(l)
@@ -44,10 +44,10 @@ class CTCCostOpCpu(theano.Op, CTCCostMixin):
         y, l = inputs
         l = l.astype(np.uint32)
 
-        outputs[0][0], outputs[1][0] = ctc(y, l)
+        outputs[0][0], outputs[1][0] = ctc.ctc(y, l)
 
 
-class CTCCostOnlyOpCPU(theano.Op):
+class CTCLossOnlyOpCPU(theano.Op):
     def make_node(self, y, l):
         y = T.as_tensor_variable(y)
         l = T.as_tensor_variable(l)
@@ -59,7 +59,7 @@ class CTCCostOnlyOpCPU(theano.Op):
         y, l = inputs
         l = l.astype(np.uint32)
 
-        outputs[0][0] = ctc_loss_only(y, l)
+        outputs[0][0] = ctc.ctc_loss_only(y, l)
 
     def grad(self, inputs, output_grads):
         y, l = inputs
@@ -67,13 +67,13 @@ class CTCCostOnlyOpCPU(theano.Op):
                 theano.gradient.grad_not_implemented(l, 1, '')]
 
 
-ctc_cost_op = CTCCostOpCpu()
-ctc_cost_only_op = CTCCostOnlyOpCPU()
+ctc_loss_op = CTCLossOpCpu()
+ctc_loss_only_op = CTCLossOnlyOpCPU()
 
 
-def ctc_cost(y, l):
-    return ctc_cost_op(y, l)[0]
+def ctc_loss(y, l):
+    return ctc_loss_op(y, l)[0]
 
 
-def ctc_cost_only(y, l):
-    return ctc_cost_only_op(y, l)[0]
+def ctc_loss_only(y, l):
+    return ctc_loss_only_op(y, l)[0]

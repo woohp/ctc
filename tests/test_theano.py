@@ -3,7 +3,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-from ctc.th import ctc_equals, ctc_cost, ctc_cost_only
+from ctc.th import ctc_equals, ctc_loss, ctc_loss_only
 
 
 class TestCTCTheano(unittest.TestCase):
@@ -22,12 +22,12 @@ class TestCTCTheano(unittest.TestCase):
 
         self.assertEqual(eq_function(y_, l_), [1])
 
-    def test_cost_op(self):
+    def test_loss_op(self):
         y = T.ftensor3()
         l = T.fmatrix()
-        cost = ctc_cost(y, l)
-        cost_function = theano.function([y, l], cost)
-        grad_function = theano.function([y, l], T.grad(cost.sum(), y))
+        loss = ctc_loss(y, l)
+        loss_function = theano.function([y, l], loss)
+        grad_function = theano.function([y, l], T.grad(loss.sum(), y))
 
         y_ = np.array([
             [[0.01, 0.01, 0.01, 0.97],
@@ -42,16 +42,16 @@ class TestCTCTheano(unittest.TestCase):
             [-1.03061, 0., 0., -1.0203]
         ]], dtype=np.float32)
 
-        self.assertAlmostEqual(cost_function(y_, l_), 0.07066, 5)
+        self.assertAlmostEqual(loss_function(y_, l_), 0.07066, 5)
         self.assertAlmostEqual(np.abs(grad_function(y_, l_) - expected_gradient).sum(), 0, 3)
 
-    def test_cost_only_op(self):
+    def test_loss_only_op(self):
         y = T.ftensor3()
         l = T.fmatrix()
-        cost = ctc_cost_only(y, l)
-        cost_function = theano.function([y, l], cost)
+        loss = ctc_loss_only(y, l)
+        loss_function = theano.function([y, l], loss)
         with self.assertRaises(Exception):
-            theano.function([y, l], T.grad(cost.sum(), y))
+            theano.function([y, l], T.grad(loss.sum(), y))
 
         y_ = np.array([
             [[0.01, 0.01, 0.01, 0.97],
@@ -60,4 +60,4 @@ class TestCTCTheano(unittest.TestCase):
         ], dtype=np.float32)
         l_ = np.array([[0]], dtype=np.float32)
 
-        self.assertAlmostEqual(cost_function(y_, l_), 0.07066, 5)
+        self.assertAlmostEqual(loss_function(y_, l_), 0.07066, 5)

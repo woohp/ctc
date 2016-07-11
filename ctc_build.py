@@ -19,7 +19,7 @@ void ctc(
     const unsigned timesteps,
     const unsigned alphabet_size,
     const unsigned labels_length,
-    float* const costs,
+    float* const losses,
     float* const grad);
 
 void ctc_loss_only(
@@ -29,7 +29,7 @@ void ctc_loss_only(
     const unsigned timesteps,
     const unsigned alphabet_size,
     const unsigned labels_length,
-    float* const costs);
+    float* const losses);
 
 unsigned decode(
     const float* const y,
