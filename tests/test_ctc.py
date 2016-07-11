@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-from ctc import ctc, ctc_loss_only, decode, equals
+import ctc
 
 
 np.set_printoptions(precision=5, suppress=True, linewidth=1000)
@@ -44,7 +44,7 @@ class TestCTC(unittest.TestCase):
         y = self.y
         l = self.l
 
-        loss, grad = ctc(y, l)
+        loss, grad = ctc.loss(y, l)
 
         self.assertAlmostEqual(loss, self.expected_loss, 5)
         self.assertTrue(np.abs(grad - self.expected_gradient).sum() < 1e-5)
@@ -53,7 +53,7 @@ class TestCTC(unittest.TestCase):
         y = self.y
         l = self.l
 
-        loss = ctc_loss_only(y, l)
+        loss = ctc.loss_only(y, l)
 
         self.assertAlmostEqual(loss, self.expected_loss, 5)
 
@@ -68,7 +68,7 @@ class TestCTC(unittest.TestCase):
         ], dtype=np.float32)
         l = np.array([[1], [2]], dtype=np.uint32)
 
-        loss, grad = ctc(y, l)
+        loss, grad = ctc.loss(y, l)
         self.assertEqual(loss[0], loss[1])
 
     def test_ctc_loss_only_batch(self):
@@ -82,7 +82,7 @@ class TestCTC(unittest.TestCase):
         ], dtype=np.float32)
         l = np.array([[1], [2]], dtype=np.uint32)
 
-        loss = ctc_loss_only(y, l)
+        loss = ctc.loss_only(y, l)
         self.assertEqual(loss[0], loss[1])
 
     def test_ctc_long_sequence(self):
@@ -95,7 +95,7 @@ class TestCTC(unittest.TestCase):
             [0.01, 0.01, 0.01, 0.97]
         ] * 100, dtype=np.float32)[None, :, :]
 
-        loss, grad = ctc(y, l)
+        loss, grad = ctc.loss(y, l)
 
         self.assertTrue(np.isfinite(grad.sum()))
 
@@ -107,7 +107,7 @@ class TestCTC(unittest.TestCase):
             [0, 0, 0, 30],
         ], dtype=np.float32)[None, :, :]
 
-        loss, grad = ctc(y, l)
+        loss, grad = ctc.loss(y, l)
 
         self.assertTrue(np.isfinite(loss))
         self.assertTrue(np.isfinite(np.abs(grad).sum()))
@@ -121,7 +121,7 @@ class TestCTC(unittest.TestCase):
             [0, 0, 0, 30],
         ], dtype=np.float32)[None, :, :]
 
-        loss, grad = ctc(y, l)
+        loss, grad = ctc.loss(y, l)
 
         self.assertTrue(np.isfinite(loss))
         self.assertTrue(np.isfinite(np.abs(grad).sum()))
@@ -134,7 +134,7 @@ class TestCTC(unittest.TestCase):
             [0, 0, 0, 30],
         ] * 100, dtype=np.float32)[None, :, :]
 
-        loss, grad = ctc(y, l)
+        loss, grad = ctc.loss(y, l)
         self.assertTrue(np.isfinite(loss))
         self.assertTrue(np.isfinite(np.abs(grad).sum()))
 
@@ -156,7 +156,7 @@ class TestCTC(unittest.TestCase):
         ], dtype=np.float32)[None, :, :]
         l = np.array([[2, 0, 2, 2, 2, 2]], dtype=np.uint32)
 
-        loss, grad = ctc(y, l)
+        loss, grad = ctc.loss(y, l)
         self.assertTrue(np.isfinite(loss))
         self.assertTrue(np.isfinite(np.abs(grad).sum()))
 
@@ -172,7 +172,7 @@ class TestCTC(unittest.TestCase):
             [0, 0, 1, 0],
             [0, 0, 0, 1],
         ], dtype=np.float32)
-        self.assertEqual(decode(l).tolist(), [0, 1, 2])
+        self.assertEqual(ctc.decode(l).tolist(), [0, 1, 2])
 
     def test_equals(self):
         y = np.array([
@@ -203,7 +203,7 @@ class TestCTC(unittest.TestCase):
             [0, 1, 1],
         ], dtype=np.uint32)
 
-        self.assertEqual(equals(y, y_true).tolist(), [True, False])
+        self.assertEqual(ctc.equals(y, y_true).tolist(), [True, False])
 
     def test_equals_blank(self):
         y = np.array([[
@@ -217,4 +217,4 @@ class TestCTC(unittest.TestCase):
 
         y_true = np.array([[0, 1, 2]], dtype=np.uint32)
 
-        self.assertEqual(equals(y, y_true).tolist(), [False])
+        self.assertEqual(ctc.equals(y, y_true).tolist(), [False])

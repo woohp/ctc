@@ -2,7 +2,7 @@ from _libctc import ffi, lib
 import numpy as np
 
 
-def ctc(y, labels):
+def loss(y, labels):
     assert len(y.shape) == 3
     assert len(labels.shape) == 2
     assert len(y) == len(labels)
@@ -28,7 +28,7 @@ def ctc(y, labels):
     return losses, gradients
 
 
-def ctc_loss_only(y, labels):
+def loss_only(y, labels):
     assert len(y.shape) == 3
     assert len(labels.shape) == 2
     assert len(y) == len(labels)

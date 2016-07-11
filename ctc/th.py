@@ -44,7 +44,7 @@ class CTCLossOpCpu(theano.Op, CTCLossMixin):
         y, l = inputs
         l = l.astype(np.uint32)
 
-        outputs[0][0], outputs[1][0] = ctc.ctc(y, l)
+        outputs[0][0], outputs[1][0] = ctc.loss(y, l)
 
 
 class CTCLossOnlyOpCPU(theano.Op):
@@ -59,7 +59,7 @@ class CTCLossOnlyOpCPU(theano.Op):
         y, l = inputs
         l = l.astype(np.uint32)
 
-        outputs[0][0] = ctc.ctc_loss_only(y, l)
+        outputs[0][0] = ctc.loss_only(y, l)
 
     def grad(self, inputs, output_grads):
         y, l = inputs
