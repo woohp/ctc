@@ -1,9 +1,4 @@
-import os
 from setuptools import setup
-
-
-if 'CC' not in os.environ:
-    os.environ['CC'] = 'g++'
 
 
 setup(

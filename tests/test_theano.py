@@ -3,7 +3,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-from ctc.th import ctc_equals, ctc_loss, ctc_loss_only
+from ctc.th import ctc_equals, ctc_cer, ctc_loss, ctc_loss_only
 
 
 class TestCTCTheano(unittest.TestCase):
@@ -61,3 +61,19 @@ class TestCTCTheano(unittest.TestCase):
         l_ = np.array([[0]], dtype=np.float32)
 
         self.assertAlmostEqual(loss_function(y_, l_), 0.07066, 5)
+
+    def test_character_error_rate_op(self):
+        y = T.ftensor3()
+        l = T.fmatrix()
+        cer = ctc_cer(y, l)
+        cer_function = theano.function([y, l], cer)
+
+        y_ = np.array([
+            [[0, 0, 0, 1],
+             [1, 0, 0, 0],
+             [0, 0, 0, 1],
+             [0, 0, 0, 1]]
+        ], dtype=np.float32)
+        l_ = np.array([[0, 1]], dtype=np.float32)
+
+        self.assertAlmostEqual(cer_function(y_, l_)[0], 0.5)

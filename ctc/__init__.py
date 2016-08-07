@@ -92,6 +92,54 @@ def equals(y, labels):
     return out
 
 
+def edit_distance(y, labels):
+    assert len(y.shape) == 3
+    assert len(labels.shape) == 2
+    assert len(y) == len(labels)
+    assert y.dtype == np.float32
+    assert labels.dtype == np.uint32
+
+    batches, timesteps, alphabet_size = y.shape
+    labels_length = labels.shape[1]
+    out = np.empty(len(y), dtype=np.float32)
+
+    lib.edit_distance(
+        ffi.cast('float*', y.ctypes.data),
+        ffi.cast('unsigned*', labels.ctypes.data),
+        ffi.cast('unsigned', batches),
+        ffi.cast('unsigned', timesteps),
+        ffi.cast('unsigned', alphabet_size),
+        ffi.cast('unsigned', labels_length),
+        ffi.cast('float*', out.ctypes.data),
+    )
+
+    return out
+
+
+def character_error_rate(y, labels):
+    assert len(y.shape) == 3
+    assert len(labels.shape) == 2
+    assert len(y) == len(labels)
+    assert y.dtype == np.float32
+    assert labels.dtype == np.uint32
+
+    batches, timesteps, alphabet_size = y.shape
+    labels_length = labels.shape[1]
+    out = np.empty(len(y), dtype=np.float32)
+
+    lib.character_error_rate(
+        ffi.cast('float*', y.ctypes.data),
+        ffi.cast('unsigned*', labels.ctypes.data),
+        ffi.cast('unsigned', batches),
+        ffi.cast('unsigned', timesteps),
+        ffi.cast('unsigned', alphabet_size),
+        ffi.cast('unsigned', labels_length),
+        ffi.cast('float*', out.ctypes.data),
+    )
+
+    return out
+
+
 if __name__ == '__main__':
     y = [[0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.97, 0.01, 0.01, 0.01, 0.97],
          [0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.97, 0.01, 0.01, 0.01, 0.97],
