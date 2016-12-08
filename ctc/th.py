@@ -16,7 +16,7 @@ class CTCEqualsOp(theano.Op):
 
     def perform(self, node, inputs, outputs):
         y_pred, y_true = inputs
-        y_true = y_true.astype(np.uint32)
+        y_true = y_true.astype(np.int32)
 
         outputs[0][0] = ctc.equals(y_pred, y_true).astype(np.int8)
 
@@ -31,7 +31,7 @@ class CTCCharacterErrorRate(theano.Op):
 
     def perform(self, node, inputs, outputs):
         y_pred, y_true = inputs
-        y_true = y_true.astype(np.uint32)
+        y_true = y_true.astype(np.int32)
 
         outputs[0][0] = ctc.character_error_rate(y_pred, y_true)
 
@@ -54,7 +54,7 @@ class CTCLossMixin(object):
 class CTCLossOpCpu(CTCLossMixin, theano.Op):
     def perform(self, node, inputs, outputs):
         y, l = inputs
-        l = l.astype(np.uint32)
+        l = l.astype(np.int32)
 
         outputs[0][0], outputs[1][0] = ctc.loss(y, l)
 
@@ -69,7 +69,7 @@ class CTCLossOnlyOpCPU(theano.Op):
 
     def perform(self, node, inputs, outputs):
         y, l = inputs
-        l = l.astype(np.uint32)
+        l = l.astype(np.int32)
 
         outputs[0][0] = ctc.loss_only(y, l)
 

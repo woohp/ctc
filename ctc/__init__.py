@@ -8,7 +8,7 @@ def loss(y, labels):
     assert len(labels.shape) == 2
     assert len(y) == len(labels)
     assert y.dtype == np.float32
-    assert labels.dtype == np.uint32
+    assert labels.dtype == np.int32
 
     batches, timesteps, alphabet_size = y.shape
     labels_length = labels.shape[1]
@@ -34,7 +34,7 @@ def loss_only(y, labels):
     assert len(labels.shape) == 2
     assert len(y) == len(labels)
     assert y.dtype == np.float32
-    assert labels.dtype == np.uint32
+    assert labels.dtype == np.int32
 
     batches, timesteps, alphabet_size = y.shape
     labels_length = labels.shape[1]
@@ -58,7 +58,7 @@ def decode(y):
     assert y.dtype == np.float32
 
     timesteps, alphabet_size = y.shape
-    decoded = np.empty(len(y), dtype=np.uint32)
+    decoded = np.empty(len(y), dtype=np.int32)
     decoded_length = lib.decode(
         ffi.cast('float*', y.ctypes.data),
         ffi.cast('unsigned', timesteps),
@@ -74,7 +74,7 @@ def equals(y, labels):
     assert len(labels.shape) == 2
     assert len(y) == len(labels)
     assert y.dtype == np.float32
-    assert labels.dtype == np.uint32
+    assert labels.dtype == np.int32
 
     batches, timesteps, alphabet_size = y.shape
     labels_length = labels.shape[1]
@@ -98,7 +98,7 @@ def edit_distance(y, labels):
     assert len(labels.shape) == 2
     assert len(y) == len(labels)
     assert y.dtype == np.float32
-    assert labels.dtype == np.uint32
+    assert labels.dtype == np.int32
 
     batches, timesteps, alphabet_size = y.shape
     labels_length = labels.shape[1]
@@ -122,7 +122,7 @@ def character_error_rate(y, labels):
     assert len(labels.shape) == 2
     assert len(y) == len(labels)
     assert y.dtype == np.float32
-    assert labels.dtype == np.uint32
+    assert labels.dtype == np.int32
 
     batches, timesteps, alphabet_size = y.shape
     labels_length = labels.shape[1]
@@ -156,11 +156,11 @@ if __name__ == '__main__':
     l = [0, 1, 2, 1, 0] * 15
 
     y = np.array([y, y], dtype=np.float32)
-    l = np.array([l, l], dtype=np.uint32)
+    l = np.array([l, l], dtype=np.int32)
 
     import time
 
     start = time.time()
-    losses, gradients = ctc(y, l)
+    losses, gradients = loss(y, l)
     print(time.time() - start)
     print(losses)

@@ -11,7 +11,7 @@ np.set_printoptions(precision=5, suppress=True, linewidth=1000)
 class TestCTC(unittest.TestCase):
     def setUp(self):
         self.n_classes = 3
-        self.l = np.array([[0, 1, 2, 1, 0]], dtype=np.uint32)
+        self.l = np.array([[0, 1, 2, 1, 0]], dtype=np.int32)
         self.y = np.array([[
             [0.01, 0.01, 0.01, 0.97],
             [0.01, 0.01, 0.01, 0.97],
@@ -67,7 +67,7 @@ class TestCTC(unittest.TestCase):
              [0.1, 0.1, 0.9, 0.1],
              [0.1, 0.1, 0.1, 0.9]],
         ], dtype=np.float32)
-        l = np.array([[1], [2]], dtype=np.uint32)
+        l = np.array([[1], [2]], dtype=np.int32)
 
         loss, grad = ctc.loss(y, l)
         self.assertEqual(loss[0], loss[1])
@@ -81,13 +81,13 @@ class TestCTC(unittest.TestCase):
              [0.1, 0.1, 0.9, 0.1],
              [0.1, 0.1, 0.1, 0.9]],
         ], dtype=np.float32)
-        l = np.array([[1], [2]], dtype=np.uint32)
+        l = np.array([[1], [2]], dtype=np.int32)
 
         loss = ctc.loss_only(y, l)
         self.assertEqual(loss[0], loss[1])
 
     def test_ctc_long_sequence(self):
-        l = np.array([0, 1] * 120, dtype=np.uint32)[None, :]
+        l = np.array([0, 1] * 120, dtype=np.int32)[None, :]
         y = np.array([
             [0.01, 0.01, 0.01, 0.97],
             [0.97, 0.01, 0.01, 0.01],
@@ -101,7 +101,7 @@ class TestCTC(unittest.TestCase):
         self.assertTrue(np.isfinite(grad.sum()))
 
     def test_bad_inputs(self):
-        l = np.array([0], dtype=np.uint32)[None, :]
+        l = np.array([0], dtype=np.int32)[None, :]
         y = np.array([
             [0, 0, 0, 30],
             [30, 0, 0, 0],
@@ -114,7 +114,7 @@ class TestCTC(unittest.TestCase):
         self.assertTrue(np.isfinite(np.abs(grad).sum()))
 
     def test_bad_inputs_2(self):
-        l = np.array([0, 1], dtype=np.uint32)[None, :]
+        l = np.array([0, 1], dtype=np.int32)[None, :]
         y = np.array([
             [0, 0, 0, 30],
             [30, 0, 0, 0],
@@ -128,7 +128,7 @@ class TestCTC(unittest.TestCase):
         self.assertTrue(np.isfinite(np.abs(grad).sum()))
 
     def test_bad_inputs_3(self):
-        l = np.array([0], dtype=np.uint32)[None, :]
+        l = np.array([0], dtype=np.int32)[None, :]
         y = np.array([
             [0, 0, 0, 30],
             [0, 30, 0, 0],
@@ -155,7 +155,7 @@ class TestCTC(unittest.TestCase):
             [30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         ], dtype=np.float32)[None, :, :]
-        l = np.array([[2, 0, 2, 2, 2, 2]], dtype=np.uint32)
+        l = np.array([[2, 0, 2, 2, 2, 2]], dtype=np.int32)
 
         loss, grad = ctc.loss(y, l)
         self.assertTrue(np.isfinite(loss))
@@ -202,7 +202,7 @@ class TestCTC(unittest.TestCase):
         y_true = np.array([
             [0, 1, 2],
             [0, 1, 1],
-        ], dtype=np.uint32)
+        ], dtype=np.int32)
 
         self.assertEqual(ctc.equals(y, y_true).tolist(), [True, False])
 
@@ -216,7 +216,7 @@ class TestCTC(unittest.TestCase):
             [0, 0, 0.1, 0.9]]
         ], dtype=np.float32)
 
-        y_true = np.array([[0, 1, 2]], dtype=np.uint32)
+        y_true = np.array([[0, 1, 2]], dtype=np.int32)
 
         self.assertEqual(ctc.equals(y, y_true).tolist(), [False])
 
@@ -265,7 +265,7 @@ class TestCTC(unittest.TestCase):
             [2, 2, 1],
             [0, 1, 2],
             [1, 2, 1],
-        ], dtype=np.uint32)
+        ], dtype=np.int32)
 
         self.assertEqual(ctc.edit_distance(y, y_true).tolist(), [0, 1, 2, 1, 3])
 
@@ -314,14 +314,14 @@ class TestCTC(unittest.TestCase):
             [2, 2, 1],
             [0, 1, 2],
             [1, 2, 1],
-        ], dtype=np.uint32)
+        ], dtype=np.int32)
 
         expected = np.array([0, 1.0 / 3, 2.0 / 3, 1.0 / 3, 1.0])
         cer = ctc.character_error_rate(y, y_true)
         self.assertTrue(np.abs(cer - expected).sum() < 1e-5)
 
     def test_wide(self):
-        l = np.array([[79], [78]], dtype=np.uint32)
+        l = np.array([[79], [78]], dtype=np.int32)
         y = np.array([
             [[0.00001] * 80 + [0.9999],
              [0.9999] + [0.00001] * 80,
