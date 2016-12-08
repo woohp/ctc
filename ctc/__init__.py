@@ -1,4 +1,5 @@
-from _libctc import ffi, lib
+from __future__ import absolute_import, print_function
+from ._libctc import ffi, lib
 import numpy as np
 
 
@@ -161,5 +162,5 @@ if __name__ == '__main__':
 
     start = time.time()
     losses, gradients = ctc(y, l)
-    print time.time() - start
-    print losses
+    print(time.time() - start)
+    print(losses)

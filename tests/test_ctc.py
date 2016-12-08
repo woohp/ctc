@@ -1,3 +1,4 @@
+from __future__ import absolute_import, print_function
 import unittest
 import numpy as np
 
@@ -46,7 +47,7 @@ class TestCTC(unittest.TestCase):
 
         loss, grad = ctc.loss(y, l)
 
-        self.assertAlmostEqual(loss, self.expected_loss, 5)
+        self.assertAlmostEqual(float(loss), self.expected_loss, 5)
         self.assertTrue(np.abs(grad - self.expected_gradient).sum() < 1e-5)
 
     def test_ctc_loss_only(self):
@@ -55,7 +56,7 @@ class TestCTC(unittest.TestCase):
 
         loss = ctc.loss_only(y, l)
 
-        self.assertAlmostEqual(loss, self.expected_loss, 5)
+        self.assertAlmostEqual(float(loss), self.expected_loss, 5)
 
     def test_ctc_batch(self):
         y = np.array([
@@ -318,3 +319,17 @@ class TestCTC(unittest.TestCase):
         expected = np.array([0, 1.0 / 3, 2.0 / 3, 1.0 / 3, 1.0])
         cer = ctc.character_error_rate(y, y_true)
         self.assertTrue(np.abs(cer - expected).sum() < 1e-5)
+
+    def test_wide(self):
+        l = np.array([[79], [78]], dtype=np.uint32)
+        y = np.array([
+            [[0.00001] * 80 + [0.9999],
+             [0.9999] + [0.00001] * 80,
+             [0.00001] * 80 + [0.9999]],
+
+            [[0.00001] * 80 + [0.9999],
+             [0.9999] + [0.00001] * 80,
+             [0.00001] * 80 + [0.9999]],
+        ], dtype=np.float32)
+
+        loss, grad = ctc.loss(y, l)

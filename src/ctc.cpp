@@ -412,6 +412,7 @@ void edit_distance(const float* __restrict__ const y_pred,
     const auto y_size = timesteps * alphabet_size;
     auto* __restrict__ const workspace = new float[labels_length * 2 * batches];
 
+    #pragma omp parallel for
     for (unsigned batch = 0; batch < batches; batch++)
     {
         auto const batch_y_pred = y_pred + batch * y_size;

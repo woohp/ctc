@@ -1,3 +1,4 @@
+from __future__ import absolute_import, print_function
 import unittest
 import numpy as np
 import theano
@@ -32,17 +33,26 @@ class TestCTCTheano(unittest.TestCase):
         y_ = np.array([
             [[0.01, 0.01, 0.01, 0.97],
              [0.97, 0.01, 0.01, 0.01],
+             [0.01, 0.01, 0.01, 0.97]],
+            [[0.01, 0.01, 0.01, 0.97],
+             [0.01, 0.97, 0.01, 0.01],
              [0.01, 0.01, 0.01, 0.97]]
         ], dtype=np.float32)
-        l_ = np.array([[0]], dtype=np.float32)
+        l_ = np.array([[0], [1]], dtype=np.float32)
 
-        expected_gradient = np.array([[
-            [-1.03061, 0., 0., -1.0203],
-            [-1.03071, 0., 0., -0.02082],
-            [-1.03061, 0., 0., -1.0203]
-        ]], dtype=np.float32)
+        expected_gradient = np.array([
+            [[-1.03061, 0., 0., -1.0203],
+             [-1.03071, 0., 0., -0.02082],
+             [-1.03061, 0., 0., -1.0203]],
+            [[0., -1.03061, 0., -1.0203],
+             [0., -1.03071, 0., -0.02082],
+             [0., -1.03061, 0., -1.0203]],
+        ], dtype=np.float32)
 
-        self.assertAlmostEqual(loss_function(y_, l_), 0.07066, 5)
+        losses = loss_function(y_, l_)
+        self.assertEqual(len(losses), 2)
+        self.assertAlmostEqual(losses[0], 0.07066, 5)
+        self.assertAlmostEqual(losses[0], 0.07066, 5)
         self.assertAlmostEqual(np.abs(grad_function(y_, l_) - expected_gradient).sum(), 0, 3)
 
     def test_loss_only_op(self):
@@ -60,7 +70,8 @@ class TestCTCTheano(unittest.TestCase):
         ], dtype=np.float32)
         l_ = np.array([[0]], dtype=np.float32)
 
-        self.assertAlmostEqual(loss_function(y_, l_), 0.07066, 5)
+        loss = loss_function(y_, l_)
+        self.assertAlmostEqual(float(loss), 0.07066, 5)
 
     def test_character_error_rate_op(self):
         y = T.ftensor3()
