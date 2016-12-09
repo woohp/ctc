@@ -48,7 +48,7 @@ class TestCTC(unittest.TestCase):
         loss, grad = ctc.loss(y, l)
 
         self.assertAlmostEqual(float(loss), self.expected_loss, 5)
-        self.assertTrue(np.abs(grad - self.expected_gradient).sum() < 1e-5)
+        self.assertTrue(np.abs(grad - self.expected_gradient).sum() < 2e-5)
 
     def test_ctc_loss_only(self):
         y = self.y
