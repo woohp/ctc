@@ -1,18 +1,16 @@
 from __future__ import absolute_import, print_function
 import unittest
 import numpy as np
-import theano
-import theano.tensor as T
+import tensorflow as tf
 
-from ctc.th import ctc_equals, ctc_cer, ctc_loss, ctc_loss_only
+from ctc.tf import ctc_loss, ctc_loss_only, ctc_equals, ctc_cer
 
 
 class TestCTCTheano(unittest.TestCase):
     def test_equals_op(self):
-        y = T.ftensor3()
-        l = T.fmatrix()
+        y = tf.placeholder(name='y', dtype=tf.float32)
+        l = tf.placeholder(name='l', dtype=tf.int32)
         eq = ctc_equals(y, l)
-        eq_function = theano.function([y, l], eq)
 
         y_ = np.array([
             [[0, 0, 0, 1],
@@ -21,14 +19,15 @@ class TestCTCTheano(unittest.TestCase):
         ], dtype=np.float32)
         l_ = np.array([[0]], dtype=np.float32)
 
-        self.assertEqual(eq_function(y_, l_), [1])
+        with tf.Session('') as session:
+            equals = session.run(eq, {y: y_, l: l_})
+        self.assertEqual(equals, [1])
 
     def test_loss_op(self):
-        y = T.ftensor3()
-        l = T.fmatrix()
+        y = tf.placeholder(name='y', dtype=tf.float32)
+        l = tf.placeholder(name='l', dtype=tf.int32)
         loss = ctc_loss(y, l)
-        loss_function = theano.function([y, l], loss)
-        grad_function = theano.function([y, l], T.grad(loss.sum(), y))
+        grad = tf.gradients([loss], [y])
 
         y_ = np.array([
             [[0.01, 0.01, 0.01, 0.97],
@@ -38,7 +37,11 @@ class TestCTCTheano(unittest.TestCase):
              [0.01, 0.97, 0.01, 0.01],
              [0.01, 0.01, 0.01, 0.97]]
         ], dtype=np.float32)
-        l_ = np.array([[0], [1]], dtype=np.float32)
+        l_ = np.array([[0], [1]], dtype=np.int32)
+
+        with tf.Session('') as session:
+            losses = session.run(loss, {y: y_, l: l_})
+            gradients = session.run(grad, {y: y_, l: l_})
 
         expected_gradient = np.array([
             [[-1.03061, 0., 0., -1.0203],
@@ -49,19 +52,17 @@ class TestCTCTheano(unittest.TestCase):
              [0., -1.03061, 0., -1.0203]],
         ], dtype=np.float32)
 
-        losses = loss_function(y_, l_)
         self.assertEqual(len(losses), 2)
         self.assertAlmostEqual(losses[0], 0.07066, 5)
         self.assertAlmostEqual(losses[1], 0.07066, 5)
-        self.assertAlmostEqual(np.abs(grad_function(y_, l_) - expected_gradient).sum(), 0, 3)
+        self.assertAlmostEqual(np.abs(gradients - expected_gradient).sum(), 0, 3)
 
     def test_loss_only_op(self):
-        y = T.ftensor3()
-        l = T.fmatrix()
+        y = tf.placeholder(name='y', dtype=tf.float32)
+        l = tf.placeholder(name='l', dtype=tf.int32)
         loss = ctc_loss_only(y, l)
-        loss_function = theano.function([y, l], loss)
         with self.assertRaises(Exception):
-            theano.function([y, l], T.grad(loss.sum(), y))
+            tf.gradients([loss], [y])
 
         y_ = np.array([
             [[0.01, 0.01, 0.01, 0.97],
@@ -70,14 +71,14 @@ class TestCTCTheano(unittest.TestCase):
         ], dtype=np.float32)
         l_ = np.array([[0]], dtype=np.float32)
 
-        loss = loss_function(y_, l_)
+        with tf.Session('') as session:
+            loss = session.run(loss, {y: y_, l: l_})
         self.assertAlmostEqual(float(loss), 0.07066, 5)
 
     def test_character_error_rate_op(self):
-        y = T.ftensor3()
-        l = T.fmatrix()
+        y = tf.placeholder(name='y', dtype=tf.float32)
+        l = tf.placeholder(name='l', dtype=tf.int32)
         cer = ctc_cer(y, l)
-        cer_function = theano.function([y, l], cer)
 
         y_ = np.array([
             [[0, 0, 0, 1],
@@ -87,4 +88,6 @@ class TestCTCTheano(unittest.TestCase):
         ], dtype=np.float32)
         l_ = np.array([[0, 1]], dtype=np.float32)
 
-        self.assertAlmostEqual(cer_function(y_, l_)[0], 0.5)
+        with tf.Session('') as session:
+            err = session.run(cer, {y: y_, l: l_})
+        self.assertAlmostEqual(err[0], 0.5)
