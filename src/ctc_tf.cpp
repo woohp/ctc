@@ -11,7 +11,14 @@ REGISTER_OP("CTC")
     .Output("loss: float")
     .Output("grad: float")
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
-        c->set_output(1, c->input(0));
+        ::tensorflow::shape_inference::ShapeHandle y_input;
+        ::tensorflow::shape_inference::ShapeHandle l_input;
+        TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 3, &y_input));
+        TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 2, &l_input));
+
+        ::tensorflow::shape_inference::DimensionHandle batch_size = c->Dim(y_input, 0);
+        c->set_output(0, c->Vector(batch_size));
+        c->set_output(1, y_input);
         return Status::OK();
     });
 
@@ -20,7 +27,13 @@ REGISTER_OP("CTCLossOnly")
     .Input("l: int32")
     .Output("loss: float")
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
-        c->set_output(1, c->input(0));
+        ::tensorflow::shape_inference::ShapeHandle y_input;
+        ::tensorflow::shape_inference::ShapeHandle l_input;
+        TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 3, &y_input));
+        TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 2, &l_input));
+
+        ::tensorflow::shape_inference::DimensionHandle batch_size = c->Dim(y_input, 0);
+        c->set_output(0, c->Vector(batch_size));
         return Status::OK();
     });
 
@@ -29,7 +42,13 @@ REGISTER_OP("CTCEquals")
     .Input("l: int32")
     .Output("equals: uint8")
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
-        c->set_output(1, c->input(0));
+        ::tensorflow::shape_inference::ShapeHandle y_input;
+        ::tensorflow::shape_inference::ShapeHandle l_input;
+        TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 3, &y_input));
+        TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 2, &l_input));
+
+        ::tensorflow::shape_inference::DimensionHandle batch_size = c->Dim(y_input, 0);
+        c->set_output(0, c->Vector(batch_size));
         return Status::OK();
     });
 
@@ -38,7 +57,13 @@ REGISTER_OP("CTCCer")
     .Input("l: int32")
     .Output("error_rates: float")
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
-        c->set_output(1, c->input(0));
+        ::tensorflow::shape_inference::ShapeHandle y_input;
+        ::tensorflow::shape_inference::ShapeHandle l_input;
+        TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 3, &y_input));
+        TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 2, &l_input));
+
+        ::tensorflow::shape_inference::DimensionHandle batch_size = c->Dim(y_input, 0);
+        c->set_output(0, c->Vector(batch_size));
         return Status::OK();
     });
 

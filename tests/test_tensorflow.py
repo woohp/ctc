@@ -8,7 +8,7 @@ from ctc.tf import ctc_loss, ctc_loss_only, ctc_equals, ctc_cer
 
 class TestCTCTheano(unittest.TestCase):
     def test_equals_op(self):
-        y = tf.placeholder(name='y', dtype=tf.float32)
+        y = tf.placeholder(name='y', shape=(None, None, None), dtype=tf.float32)
         l = tf.placeholder(name='l', dtype=tf.int32)
         eq = ctc_equals(y, l)
 
@@ -24,10 +24,12 @@ class TestCTCTheano(unittest.TestCase):
         self.assertEqual(equals, [1])
 
     def test_loss_op(self):
-        y = tf.placeholder(name='y', dtype=tf.float32)
-        l = tf.placeholder(name='l', dtype=tf.int32)
+        y = tf.placeholder(name='y', shape=(None, None, None), dtype=tf.float32)
+        l = tf.placeholder(name='l', shape=(None, None), dtype=tf.int32)
         loss = ctc_loss(y, l)
         grad = tf.gradients([loss], [y])
+
+        self.assertEqual(len(loss.get_shape()._dims), 1)
 
         y_ = np.array([
             [[0.01, 0.01, 0.01, 0.97],
