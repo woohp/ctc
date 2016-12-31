@@ -4,17 +4,21 @@ from cffi import FFI
 ffi = FFI()
 
 with open('src/ctc.cpp') as f:
-    extra_compile_args = ['-std=c++1y']
-    extra_link_args = []
-    if sys.platform in ('linux', 'linux2'):
-        extra_compile_args.append('-fopenmp')
-        extra_link_args = ['-lstdc++', '-lgomp']
+    file_content = f.read()
 
-    ffi.set_source('ctc._libctc',
-                   f.read(),
-                   extra_compile_args=extra_compile_args,
-                   extra_link_args=extra_link_args,
-                   source_extension='.cpp')
+extra_compile_args = ['-std=c++1y']
+libraries = []
+if sys.platform.startswith('linux'):
+    extra_compile_args.append('-fopenmp')
+    libraries = ['stdc++', 'gomp']
+
+ffi.set_source(
+    'ctc._libctc',
+    file_content,
+    extra_compile_args=extra_compile_args,
+    libraries=libraries,
+    source_extension='.cpp'
+)
 
 ffi.cdef('''
 void ctc(

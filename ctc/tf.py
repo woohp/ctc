@@ -7,7 +7,7 @@ _ctc = tf.load_op_library(glob.glob(os.path.dirname(__file__) + '/_tf_op.*.so')[
 
 
 @ops.RegisterGradient('CTC')
-def _ctc_grad(op, output_grad1, output_grad2):
+def _ctc_grad(op, output_grad1, _):
     grad = op.outputs[1]
     return [grad * output_grad1[:, tf.newaxis, tf.newaxis], None]
 
