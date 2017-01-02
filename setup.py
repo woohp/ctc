@@ -32,5 +32,6 @@ setup(
     install_requires=['cffi>=1.0.0'],
     packages=['ctc'],
     ext_modules=ext_modules,
-    test_suite='tests'
+    test_suite='tests',
+    tests_require=['theano', 'tensorflow>=0.12.1']
 )
