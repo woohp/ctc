@@ -1,6 +1,9 @@
 #include <cmath>
+#include <array>
 #include <cstring>
 #include <algorithm>
+#include <future>
+#include <thread>
 using namespace std;
 
 
@@ -55,6 +58,36 @@ float logadd(float* x, unsigned n)
 }
 
 
+template<typename F>
+void parallel_for(int length, int max_threads, const F& func)
+{
+    const auto n_threads = min(static_cast<int>(std::thread::hardware_concurrency()), max_threads);
+    const auto thread_stride = length / n_threads;
+    auto leftover = length - thread_stride * n_threads;
+
+    auto func_wrapper = [&func](int start, int end)
+    {
+        for (; start < end; start++)
+            func(start);
+    };
+
+    array<future<void>, 32> futures;
+    for (int i = 0, start = 0; i < n_threads; i++)
+    {
+        auto this_thread_stride = thread_stride;
+        if (leftover > 0)
+        {
+            this_thread_stride += 1;
+            leftover--;
+        }
+        futures[i] = std::async(std::launch::async, func_wrapper, start, start + this_thread_stride);
+        start += this_thread_stride;
+    }
+    for (int i = 0; i < n_threads; i++)
+        futures[i].wait();
+}
+
+
 extern "C" {
 
 void ctc(const float* __restrict__ const y,
@@ -80,8 +113,7 @@ void ctc(const float* __restrict__ const y,
 
     auto* __restrict__ const workspace = new float[workspace_size * batches];
 
-    #pragma omp parallel for
-    for (unsigned batch = 0; batch < batches; batch++)
+    parallel_for(batches, 32, [=](unsigned batch)
     {
         const auto* __restrict__ const batch_y = y + batch * y_size;
         const auto* __restrict__ const batch_labels = labels + batch * labels_length;
@@ -223,7 +255,7 @@ void ctc(const float* __restrict__ const y,
             auto grad_loss = logadd(numbers_to_add, i) - 2 * log_y_t[blank] - log_prob_t;
             grad_t[blank] = -exp(grad_loss);
         }
-    }
+    });
 
     delete[] workspace;
 }
@@ -250,8 +282,7 @@ void ctc_loss_only(
 
     auto* __restrict__ const workspace = new float[workspace_size * batches];
 
-    #pragma omp parallel for
-    for (unsigned batch = 0; batch < batches; batch++)
+    parallel_for(batches, 32, [=](unsigned batch)
     {
         const auto* __restrict__ const batch_y = y + batch * y_size;
         const auto* __restrict__ const batch_labels = labels + batch * labels_length;
@@ -300,7 +331,7 @@ void ctc_loss_only(
         const auto a_t_last = a + ((timesteps - 1) % 2) * labels_length_p;
         const auto log_prob = logadd(a_t_last[labels_length_p-1], a_t_last[labels_length_p-2]);
         losses[batch] = -log_prob;
-    }
+    });
 
     delete[] workspace;
 }
@@ -354,8 +385,7 @@ void equals(const float* __restrict__ const y_pred,
     const auto blank = alphabet_size - 1;
     const auto y_size = timesteps * alphabet_size;
 
-    #pragma omp parallel for
-    for (unsigned batch = 0; batch < batches; batch++)
+    parallel_for(batches, 8, [=](unsigned batch)
     {
         auto const batch_y_pred = y_pred + batch * y_size;
         auto const batch_labels = labels + batch * labels_length;
@@ -397,7 +427,7 @@ void equals(const float* __restrict__ const y_pred,
         equal = equal && (decoded_length == labels_length);
 
         out[batch] = equal;
-    }
+    });
 }
 
 void edit_distance(const float* __restrict__ const y_pred,
@@ -412,8 +442,7 @@ void edit_distance(const float* __restrict__ const y_pred,
     const auto y_size = timesteps * alphabet_size;
     auto* __restrict__ const workspace = new float[labels_length * 2 * batches];
 
-    #pragma omp parallel for
-    for (unsigned batch = 0; batch < batches; batch++)
+    parallel_for(batches, 32, [=](unsigned batch)
     {
         auto const batch_y_pred = y_pred + batch * y_size;
         auto const batch_labels = labels + batch * labels_length;
@@ -474,7 +503,7 @@ void edit_distance(const float* __restrict__ const y_pred,
         }
         else
             out[batch] = labels_length;
-    }
+    });
 
     delete[] workspace;
 }

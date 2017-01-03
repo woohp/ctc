@@ -3,10 +3,8 @@ import sys
 
 
 extra_compile_args = ['-std=c++1y']
-extra_link_args = []
 if sys.platform in ('linux', 'linux2'):
-    extra_compile_args.extend(('-fopenmp', '-D_GLIBCXX_USE_CXX11_ABI=0'))
-    extra_link_args.append('-lgomp')
+    extra_compile_args.append('-D_GLIBCXX_USE_CXX11_ABI=0')
 
 
 ext_modules = []
@@ -17,7 +15,6 @@ try:
         ['src/ctc_tf.cpp', 'src/ctc.cpp'],
         include_dirs=[tf.sysconfig.get_include()],
         extra_compile_args=extra_compile_args,
-        extra_link_args=extra_link_args,
     ))
 except ImportError:
     pass

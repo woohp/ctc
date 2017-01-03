@@ -9,8 +9,7 @@ with open('src/ctc.cpp') as f:
 extra_compile_args = ['-std=c++1y']
 libraries = []
 if sys.platform.startswith('linux'):
-    extra_compile_args.append('-fopenmp')
-    libraries = ['stdc++', 'gomp']
+    libraries = ['stdc++']
 
 ffi.set_source(
     'ctc._libctc',
