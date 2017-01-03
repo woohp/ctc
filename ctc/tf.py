@@ -3,7 +3,7 @@ import os
 import glob
 import tensorflow as tf
 from tensorflow.python.framework import ops
-_ctc = tf.load_op_library(glob.glob(os.path.dirname(__file__) + '/_tf_op.*.so')[0])
+_ctc = tf.load_op_library(glob.glob(os.path.dirname(__file__) + '/_tf_op*.so')[0])
 
 
 @ops.RegisterGradient('CTC')
