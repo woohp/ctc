@@ -59,20 +59,20 @@ float logadd(float* x, unsigned n)
 
 
 template<typename F>
-void parallel_for(int length, int max_threads, const F& func)
+void parallel_for(unsigned length, unsigned max_threads, const F& func)
 {
-    const auto n_threads = min(static_cast<int>(std::thread::hardware_concurrency()), max_threads);
+    const auto n_threads = min(std::thread::hardware_concurrency(), max_threads);
     const auto thread_stride = length / n_threads;
     auto leftover = length - thread_stride * n_threads;
 
-    auto func_wrapper = [&func](int start, int end)
+    auto func_wrapper = [&func](unsigned start, unsigned end)
     {
         for (; start < end; start++)
             func(start);
     };
 
     array<future<void>, 32> futures;
-    for (int i = 0, start = 0; i < n_threads; i++)
+    for (unsigned i = 0, start = 0; i < n_threads; i++)
     {
         auto this_thread_stride = thread_stride;
         if (leftover > 0)
@@ -83,7 +83,7 @@ void parallel_for(int length, int max_threads, const F& func)
         futures[i] = std::async(std::launch::async, func_wrapper, start, start + this_thread_stride);
         start += this_thread_stride;
     }
-    for (int i = 0; i < n_threads; i++)
+    for (unsigned i = 0; i < n_threads; i++)
         futures[i].wait();
 }
 
@@ -113,7 +113,7 @@ void ctc(const float* __restrict__ const y,
 
     auto* __restrict__ const workspace = new float[workspace_size * batches];
 
-    parallel_for(batches, 32, [=](unsigned batch)
+    parallel_for(batches, 64, [=](unsigned batch)
     {
         const auto* __restrict__ const batch_y = y + batch * y_size;
         const auto* __restrict__ const batch_labels = labels + batch * labels_length;
@@ -282,7 +282,7 @@ void ctc_loss_only(
 
     auto* __restrict__ const workspace = new float[workspace_size * batches];
 
-    parallel_for(batches, 32, [=](unsigned batch)
+    parallel_for(batches, 64, [=](unsigned batch)
     {
         const auto* __restrict__ const batch_y = y + batch * y_size;
         const auto* __restrict__ const batch_labels = labels + batch * labels_length;
@@ -385,7 +385,7 @@ void equals(const float* __restrict__ const y_pred,
     const auto blank = alphabet_size - 1;
     const auto y_size = timesteps * alphabet_size;
 
-    parallel_for(batches, 8, [=](unsigned batch)
+    parallel_for(batches, 64, [=](unsigned batch)
     {
         auto const batch_y_pred = y_pred + batch * y_size;
         auto const batch_labels = labels + batch * labels_length;
@@ -442,7 +442,7 @@ void edit_distance(const float* __restrict__ const y_pred,
     const auto y_size = timesteps * alphabet_size;
     auto* __restrict__ const workspace = new float[labels_length * 2 * batches];
 
-    parallel_for(batches, 32, [=](unsigned batch)
+    parallel_for(batches, 64, [=](unsigned batch)
     {
         auto const batch_y_pred = y_pred + batch * y_size;
         auto const batch_labels = labels + batch * labels_length;
