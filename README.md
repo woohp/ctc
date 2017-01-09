@@ -9,7 +9,7 @@ This is an implementation of the loss function for the CPU.
 
 ## Examples
 ### Simple example
-```
+```python
 import numpy as np
 import ctc
 
@@ -43,7 +43,7 @@ print(gradient)
 ```
 
 ### Theano integration
-```
+```python
 import theano
 import theano.tensor as T
 import ctc.th
@@ -59,7 +59,7 @@ print(grad_function(y_pred, labels))
 ```
 
 ### Tensorflow integration
-```
+```python
 import tensorflow as tf
 import ctc.tf
 
