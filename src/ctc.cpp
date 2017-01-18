@@ -61,7 +61,13 @@ float logadd(float* x, unsigned n)
 template<typename F>
 void parallel_for(unsigned length, unsigned max_threads, const F& func)
 {
-    const auto n_threads = min(std::thread::hardware_concurrency(), max_threads);
+    if (length == 1)
+    {
+        func(0);
+        return;
+    }
+
+    const auto n_threads = min({std::thread::hardware_concurrency(), max_threads, length});
     const auto thread_stride = length / n_threads;
     auto leftover = length - thread_stride * n_threads;
 
