@@ -15,6 +15,7 @@ ffi.set_source(
     'ctc._libctc',
     file_content,
     extra_compile_args=extra_compile_args,
+    include_dirs=['src'],
     libraries=libraries,
     source_extension='.cpp'
 )
