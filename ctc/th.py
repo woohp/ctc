@@ -7,33 +7,39 @@ import ctc
 
 
 class CTCEqualsOp(theano.Op):
-    def make_node(self, y_pred, y_true):
+    def make_node(self, y_pred, y_true, label_lengths):
         y_pred = T.as_tensor_variable(y_pred)
         y_true = T.as_tensor_variable(y_true)
+        label_lengths = T.as_tensor_variable(label_lengths)
         assert y_pred.ndim == 3
         assert y_true.ndim == 2
-        return theano.Apply(self, [y_pred, y_true], [T.bvector()])
+        assert label_lengths.ndim == 1
+        return theano.Apply(self, [y_pred, y_true, label_lengths], [T.bvector()])
 
     def perform(self, node, inputs, outputs):
-        y_pred, y_true = inputs
+        y_pred, y_true, label_lengths = inputs
         y_true = y_true.astype(np.int32)
+        label_lengths = label_lengths.astype(np.int32)
 
-        outputs[0][0] = ctc.equals(y_pred, y_true).astype(np.int8)
+        outputs[0][0] = ctc.equals(y_pred, y_true, label_lengths).astype(np.int8)
 
 
 class CTCCharacterErrorRate(theano.Op):
-    def make_node(self, y_pred, y_true):
+    def make_node(self, y_pred, y_true, label_lengths):
         y_pred = T.as_tensor_variable(y_pred)
         y_true = T.as_tensor_variable(y_true)
+        label_lengths = T.as_tensor_variable(label_lengths)
         assert y_pred.ndim == 3
         assert y_true.ndim == 2
-        return theano.Apply(self, [y_pred, y_true], [T.fvector()])
+        assert label_lengths.ndim == 1
+        return theano.Apply(self, [y_pred, y_true, label_lengths], [T.fvector()])
 
     def perform(self, node, inputs, outputs):
-        y_pred, y_true = inputs
+        y_pred, y_true, label_lengths = inputs
         y_true = y_true.astype(np.int32)
+        label_lengths = label_lengths.astype(np.int32)
 
-        outputs[0][0] = ctc.character_error_rate(y_pred, y_true)
+        outputs[0][0] = ctc.character_error_rate(y_pred, y_true, label_lengths)
 
 
 class CTCLossMixin(object):

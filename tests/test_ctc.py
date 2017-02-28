@@ -204,7 +204,9 @@ class TestCTC(unittest.TestCase):
             [0, 1, 1],
         ], dtype=np.int32)
 
-        self.assertEqual(ctc.equals(y, y_true).tolist(), [True, False])
+        label_lengths = np.array([3, 3], dtype=np.int32)
+
+        self.assertEqual(ctc.equals(y, y_true, label_lengths).tolist(), [True, False])
 
     def test_equals_blank(self):
         y = np.array([[
@@ -218,7 +220,9 @@ class TestCTC(unittest.TestCase):
 
         y_true = np.array([[0, 1, 2]], dtype=np.int32)
 
-        self.assertEqual(ctc.equals(y, y_true).tolist(), [False])
+        label_lengths = np.array([3], dtype=np.int32)
+
+        self.assertEqual(ctc.equals(y, y_true, label_lengths).tolist(), [False])
 
     def test_edit_distance(self):
         y = np.array([
@@ -267,7 +271,9 @@ class TestCTC(unittest.TestCase):
             [1, 2, 1],
         ], dtype=np.int32)
 
-        self.assertEqual(ctc.edit_distance(y, y_true).tolist(), [0, 1, 2, 1, 3])
+        label_lengths = np.array([3, 3, 3, 3, 3], dtype=np.int32)
+
+        self.assertEqual(ctc.edit_distance(y, y_true, label_lengths).tolist(), [0, 1, 2, 1, 3])
 
     def test_character_error_rate(self):
         y = np.array([
@@ -316,8 +322,10 @@ class TestCTC(unittest.TestCase):
             [1, 2, 1],
         ], dtype=np.int32)
 
+        label_lengths = np.array([3, 3, 3, 3, 3], dtype=np.int32)
+
         expected = np.array([0, 1.0 / 3, 2.0 / 3, 1.0 / 3, 1.0])
-        cer = ctc.character_error_rate(y, y_true)
+        cer = ctc.character_error_rate(y, y_true, label_lengths)
         self.assertTrue(np.abs(cer - expected).sum() < 1e-5)
 
     def test_wide(self):

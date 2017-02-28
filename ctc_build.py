@@ -52,7 +52,7 @@ void equals(
     const unsigned batches,
     const unsigned timesteps,
     const unsigned alphabet_size,
-    const unsigned labels_length,
+    const unsigned* label_lengths,
     unsigned char* const out);
 
 void edit_distance(
@@ -61,7 +61,7 @@ void edit_distance(
     const unsigned batches,
     const unsigned timesteps,
     const unsigned alphabet_size,
-    const unsigned labels_length,
+    const unsigned* label_lengths,
     float* const out);
 
 void character_error_rate(
@@ -70,7 +70,7 @@ void character_error_rate(
     const unsigned batches,
     const unsigned timesteps,
     const unsigned alphabet_size,
-    const unsigned labels_length,
+    const unsigned* label_lengths,
     float* const out);
 
 ''')

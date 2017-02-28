@@ -11,8 +11,9 @@ class TestCTCTheano(unittest.TestCase):
     def test_equals_op(self):
         y = T.ftensor3()
         l = T.fmatrix()
-        eq = ctc_equals(y, l)
-        eq_function = theano.function([y, l], eq)
+        label_lengths = T.fvector()
+        eq = ctc_equals(y, l, label_lengths)
+        eq_function = theano.function([y, l, label_lengths], eq)
 
         y_ = np.array([
             [[0, 0, 0, 1],
@@ -20,8 +21,9 @@ class TestCTCTheano(unittest.TestCase):
              [0, 0, 0, 1]]
         ], dtype=np.float32)
         l_ = np.array([[0]], dtype=np.float32)
+        label_lengths_ = np.array([1], dtype=np.float32)
 
-        self.assertEqual(eq_function(y_, l_), [1])
+        self.assertEqual(eq_function(y_, l_, label_lengths_), [1])
 
     def test_loss_op(self):
         y = T.ftensor3()
@@ -76,8 +78,9 @@ class TestCTCTheano(unittest.TestCase):
     def test_character_error_rate_op(self):
         y = T.ftensor3()
         l = T.fmatrix()
-        cer = ctc_cer(y, l)
-        cer_function = theano.function([y, l], cer)
+        label_lengths = T.fvector()
+        cer = ctc_cer(y, l, label_lengths)
+        cer_function = theano.function([y, l, label_lengths], cer)
 
         y_ = np.array([
             [[0, 0, 0, 1],
@@ -86,5 +89,6 @@ class TestCTCTheano(unittest.TestCase):
              [0, 0, 0, 1]]
         ], dtype=np.float32)
         l_ = np.array([[0, 1]], dtype=np.float32)
+        label_lengths_ = np.array([2], dtype=np.float32)
 
-        self.assertAlmostEqual(cer_function(y_, l_)[0], 0.5)
+        self.assertAlmostEqual(cer_function(y_, l_, label_lengths_)[0], 0.5)

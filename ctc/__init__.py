@@ -69,15 +69,17 @@ def decode(y):
     return decoded[:decoded_length]
 
 
-def equals(y, labels):
+def equals(y, labels, label_lengths):
     assert len(y.shape) == 3
     assert len(labels.shape) == 2
+    assert len(label_lengths.shape) == 1
     assert len(y) == len(labels)
+    assert len(y) == len(label_lengths)
     assert y.dtype == np.float32
     assert labels.dtype == np.int32
+    assert label_lengths.dtype == np.int32
 
     batches, timesteps, alphabet_size = y.shape
-    labels_length = labels.shape[1]
     out = np.empty(len(y), dtype=np.bool)
 
     lib.equals(
@@ -86,22 +88,24 @@ def equals(y, labels):
         ffi.cast('unsigned', batches),
         ffi.cast('unsigned', timesteps),
         ffi.cast('unsigned', alphabet_size),
-        ffi.cast('unsigned', labels_length),
+        ffi.cast('unsigned*', label_lengths.ctypes.data),
         ffi.cast('unsigned char*', out.ctypes.data),
     )
 
     return out
 
 
-def edit_distance(y, labels):
+def edit_distance(y, labels, label_lengths):
     assert len(y.shape) == 3
     assert len(labels.shape) == 2
+    assert len(label_lengths.shape) == 1
     assert len(y) == len(labels)
+    assert len(y) == len(label_lengths)
     assert y.dtype == np.float32
     assert labels.dtype == np.int32
+    assert label_lengths.dtype == np.int32
 
     batches, timesteps, alphabet_size = y.shape
-    labels_length = labels.shape[1]
     out = np.empty(len(y), dtype=np.float32)
 
     lib.edit_distance(
@@ -110,22 +114,24 @@ def edit_distance(y, labels):
         ffi.cast('unsigned', batches),
         ffi.cast('unsigned', timesteps),
         ffi.cast('unsigned', alphabet_size),
-        ffi.cast('unsigned', labels_length),
+        ffi.cast('unsigned*', label_lengths.ctypes.data),
         ffi.cast('float*', out.ctypes.data),
     )
 
     return out
 
 
-def character_error_rate(y, labels):
+def character_error_rate(y, labels, label_lengths):
     assert len(y.shape) == 3
     assert len(labels.shape) == 2
+    assert len(label_lengths.shape) == 1
     assert len(y) == len(labels)
+    assert len(y) == len(label_lengths)
     assert y.dtype == np.float32
     assert labels.dtype == np.int32
+    assert label_lengths.dtype == np.int32
 
     batches, timesteps, alphabet_size = y.shape
-    labels_length = labels.shape[1]
     out = np.empty(len(y), dtype=np.float32)
 
     lib.character_error_rate(
@@ -134,7 +140,7 @@ def character_error_rate(y, labels):
         ffi.cast('unsigned', batches),
         ffi.cast('unsigned', timesteps),
         ffi.cast('unsigned', alphabet_size),
-        ffi.cast('unsigned', labels_length),
+        ffi.cast('unsigned*', label_lengths.ctypes.data),
         ffi.cast('float*', out.ctypes.data),
     )
 

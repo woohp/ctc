@@ -40,6 +40,7 @@ REGISTER_OP("CTCLossOnly")
 REGISTER_OP("CTCEquals")
     .Input("y: float")
     .Input("l: int32")
+    .Input("label_lengths: int32")
     .Output("equals: uint8")
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
         ::tensorflow::shape_inference::ShapeHandle y_input;
@@ -55,6 +56,7 @@ REGISTER_OP("CTCEquals")
 REGISTER_OP("CTCCer")
     .Input("y: float")
     .Input("l: int32")
+    .Input("label_lengths: int32")
     .Output("error_rates: float")
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
         ::tensorflow::shape_inference::ShapeHandle y_input;
@@ -151,11 +153,13 @@ public:
         auto y = y_tensor.flat<float>();
         const Tensor& l_tensor = context->input(1);
         auto l = l_tensor.flat<int32>(); 
+        const Tensor& label_lengths_tensor = context->input(2);
+        auto label_lengths = label_lengths_tensor.flat<int32>();
+
         auto y_tensor_shape = y_tensor.shape();
         const auto n_batches = y_tensor_shape.dim_size(0);
         const auto timesteps = y_tensor_shape.dim_size(1);
         const auto alphabet_size = y_tensor_shape.dim_size(2);
-        const auto labels_length = l_tensor.shape().dim_size(1);
 
         // Create output tensors
         Tensor* output_tensor = nullptr;
@@ -167,7 +171,7 @@ public:
             n_batches,
             timesteps,
             alphabet_size,
-            labels_length,
+            reinterpret_cast<const unsigned*>(label_lengths.data()),
             output_tensor->flat<unsigned char>().data()
         );
     }
@@ -185,11 +189,13 @@ public:
         auto y = y_tensor.flat<float>();
         const Tensor& l_tensor = context->input(1);
         auto l = l_tensor.flat<int32>(); 
+        const Tensor& label_lengths_tensor = context->input(2);
+        auto label_lengths = label_lengths_tensor.flat<int32>();
+
         auto y_tensor_shape = y_tensor.shape();
         const auto n_batches = y_tensor_shape.dim_size(0);
         const auto timesteps = y_tensor_shape.dim_size(1);
         const auto alphabet_size = y_tensor_shape.dim_size(2);
-        const auto labels_length = l_tensor.shape().dim_size(1);
 
         // Create output tensors
         Tensor* output_tensor = nullptr;
@@ -201,7 +207,7 @@ public:
             n_batches,
             timesteps,
             alphabet_size,
-            labels_length,
+            reinterpret_cast<const unsigned*>(label_lengths.data()),
             output_tensor->flat<float>().data()
         );
     }
