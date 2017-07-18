@@ -3,8 +3,6 @@ import sys
 
 
 extra_compile_args = ['-std=c++1y']
-if sys.platform in ('linux', 'linux2'):
-    extra_compile_args.append('-D_GLIBCXX_USE_CXX11_ABI=0')
 
 
 ext_modules = []
