@@ -1,2 +1,1 @@
-Theano==0.8.2
 tensorflow==0.12.1
